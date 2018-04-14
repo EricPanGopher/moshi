@@ -18,6 +18,7 @@ package com.squareup.moshi;
 import java.io.Closeable;
 import java.io.Flushable;
 import java.io.IOException;
+import java.lang.reflect.Type;
 import java.util.Arrays;
 import javax.annotation.CheckReturnValue;
 import javax.annotation.Nullable;
@@ -137,7 +138,7 @@ public abstract class JsonWriter implements Closeable, Flushable {
   String indent;
   boolean lenient;
   boolean serializeNulls;
-  boolean promoteValueToName;
+  @Nullable Type promoteValueToNameFailureToken;
 
   /** Returns a new instance that writes UTF-8 encoded JSON to {@code sink}. */
   @CheckReturnValue public static JsonWriter of(BufferedSink sink) {
@@ -339,12 +340,15 @@ public abstract class JsonWriter implements Closeable, Flushable {
    * Changes the writer to treat the next value as a string name. This is useful for map adapters so
    * that arbitrary type adapters can use {@link #value} to write a name value.
    */
-  final void promoteValueToName() throws IOException {
+  final void promoteValueToName(Type failureToken) throws IOException {
+    if (failureToken == null) {
+      throw new NullPointerException("failureToken == null");
+    }
     int context = peekScope();
     if (context != NONEMPTY_OBJECT && context != EMPTY_OBJECT) {
       throw new IllegalStateException("Nesting problem.");
     }
-    promoteValueToName = true;
+    promoteValueToNameFailureToken = failureToken;
   }
 
   /**

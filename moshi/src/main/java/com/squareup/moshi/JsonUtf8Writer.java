@@ -91,7 +91,7 @@ final class JsonUtf8Writer extends JsonWriter {
   }
 
   @Override public JsonWriter endObject() throws IOException {
-    promoteValueToName = false;
+    promoteValueToNameFailureToken = null;
     return close(EMPTY_OBJECT, NONEMPTY_OBJECT, "}");
   }
 
@@ -144,11 +144,15 @@ final class JsonUtf8Writer extends JsonWriter {
     }
     deferredName = name;
     pathNames[stackSize - 1] = name;
-    promoteValueToName = false;
+    promoteValueToNameFailureToken = null;
     return this;
   }
 
   private void writeDeferredName() throws IOException {
+    if (promoteValueToNameFailureToken != null) {
+      throw new IllegalStateException(promoteValueToNameFailureToken
+          + " cannot be used as a map key in JSON at path " + getPath());
+    }
     if (deferredName != null) {
       beforeName();
       string(sink, deferredName);
@@ -160,7 +164,7 @@ final class JsonUtf8Writer extends JsonWriter {
     if (value == null) {
       return nullValue();
     }
-    if (promoteValueToName) {
+    if (promoteValueToNameFailureToken != null) {
       return name(value);
     }
     writeDeferredName();
@@ -171,6 +175,10 @@ final class JsonUtf8Writer extends JsonWriter {
   }
 
   @Override public JsonWriter nullValue() throws IOException {
+    if (promoteValueToNameFailureToken != null) {
+      throw new IllegalStateException(
+          "null cannot be used as a map key in JSON at path " + getPath());
+    }
     if (deferredName != null) {
       if (serializeNulls) {
         writeDeferredName();
@@ -204,7 +212,7 @@ final class JsonUtf8Writer extends JsonWriter {
     if (!lenient && (Double.isNaN(value) || Double.isInfinite(value))) {
       throw new IllegalArgumentException("Numeric values must be finite, but was " + value);
     }
-    if (promoteValueToName) {
+    if (promoteValueToNameFailureToken != null) {
       return name(Double.toString(value));
     }
     writeDeferredName();
@@ -215,7 +223,7 @@ final class JsonUtf8Writer extends JsonWriter {
   }
 
   @Override public JsonWriter value(long value) throws IOException {
-    if (promoteValueToName) {
+    if (promoteValueToNameFailureToken != null) {
       return name(Long.toString(value));
     }
     writeDeferredName();
@@ -235,7 +243,7 @@ final class JsonUtf8Writer extends JsonWriter {
         && (string.equals("-Infinity") || string.equals("Infinity") || string.equals("NaN"))) {
       throw new IllegalArgumentException("Numeric values must be finite, but was " + value);
     }
-    if (promoteValueToName) {
+    if (promoteValueToNameFailureToken != null) {
       return name(string);
     }
     writeDeferredName();

@@ -39,10 +39,12 @@ final class MapJsonAdapter<K, V> extends JsonAdapter<Map<K, V>> {
     }
   };
 
+  private final Type keyType;
   private final JsonAdapter<K> keyAdapter;
   private final JsonAdapter<V> valueAdapter;
 
   MapJsonAdapter(Moshi moshi, Type keyType, Type valueType) {
+    this.keyType = keyType;
     this.keyAdapter = moshi.adapter(keyType);
     this.valueAdapter = moshi.adapter(valueType);
   }
@@ -53,7 +55,7 @@ final class MapJsonAdapter<K, V> extends JsonAdapter<Map<K, V>> {
       if (entry.getKey() == null) {
         throw new JsonDataException("Map key is null at " + writer.getPath());
       }
-      writer.promoteValueToName();
+      writer.promoteValueToName(keyType);
       keyAdapter.toJson(writer, entry.getKey());
       valueAdapter.toJson(writer, entry.getValue());
     }

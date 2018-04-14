@@ -47,6 +47,10 @@ final class JsonValueWriter extends JsonWriter {
   }
 
   @Override public JsonWriter beginArray() throws IOException {
+    if (promoteValueToNameFailureToken != null) {
+      throw new IllegalStateException(promoteValueToNameFailureToken
+          + " cannot be used as a map key in JSON at path " + getPath());
+    }
     checkStack();
     List<Object> list = new ArrayList<>();
     add(list);
@@ -67,6 +71,10 @@ final class JsonValueWriter extends JsonWriter {
   }
 
   @Override public JsonWriter beginObject() throws IOException {
+    if (promoteValueToNameFailureToken != null) {
+      throw new IllegalStateException(promoteValueToNameFailureToken
+          + " cannot be used as a map key in JSON at path " + getPath());
+    }
     checkStack();
     Map<String, Object> map = new LinkedHashTreeMap<>();
     add(map);
@@ -82,7 +90,7 @@ final class JsonValueWriter extends JsonWriter {
     if (deferredName != null) {
       throw new IllegalStateException("Dangling name: " + deferredName);
     }
-    promoteValueToName = false;
+    promoteValueToNameFailureToken = null;
     stackSize--;
     stack[stackSize] = null;
     pathNames[stackSize] = null; // Free the last path name so that it can be garbage collected!
@@ -102,12 +110,12 @@ final class JsonValueWriter extends JsonWriter {
     }
     deferredName = name;
     pathNames[stackSize - 1] = name;
-    promoteValueToName = false;
+    promoteValueToNameFailureToken = null;
     return this;
   }
 
   @Override public JsonWriter value(@Nullable String value) throws IOException {
-    if (promoteValueToName) {
+    if (promoteValueToNameFailureToken != null) {
       return name(value);
     }
     add(value);
@@ -116,18 +124,30 @@ final class JsonValueWriter extends JsonWriter {
   }
 
   @Override public JsonWriter nullValue() throws IOException {
+    if (promoteValueToNameFailureToken != null) {
+      throw new IllegalStateException(
+          "null cannot be used as a map key in JSON at path " + getPath());
+    }
     add(null);
     pathIndices[stackSize - 1]++;
     return this;
   }
 
   @Override public JsonWriter value(boolean value) throws IOException {
+    if (promoteValueToNameFailureToken != null) {
+      throw new IllegalStateException(promoteValueToNameFailureToken
+          + " cannot be used as a map key in JSON at path " + getPath());
+    }
     add(value);
     pathIndices[stackSize - 1]++;
     return this;
   }
 
   @Override public JsonWriter value(@Nullable Boolean value) throws IOException {
+    if (promoteValueToNameFailureToken != null) {
+      throw new IllegalStateException(promoteValueToNameFailureToken
+          + " cannot be used as a map key in JSON at path " + getPath());
+    }
     add(value);
     pathIndices[stackSize - 1]++;
     return this;
@@ -138,7 +158,7 @@ final class JsonValueWriter extends JsonWriter {
         && (Double.isNaN(value) || value == NEGATIVE_INFINITY || value == POSITIVE_INFINITY)) {
       throw new IllegalArgumentException("Numeric values must be finite, but was " + value);
     }
-    if (promoteValueToName) {
+    if (promoteValueToNameFailureToken != null) {
       return name(Double.toString(value));
     }
     add(value);
@@ -147,7 +167,7 @@ final class JsonValueWriter extends JsonWriter {
   }
 
   @Override public JsonWriter value(long value) throws IOException {
-    if (promoteValueToName) {
+    if (promoteValueToNameFailureToken != null) {
       return name(Long.toString(value));
     }
     add(value);
@@ -177,7 +197,7 @@ final class JsonValueWriter extends JsonWriter {
     BigDecimal bigDecimalValue = value instanceof BigDecimal
         ? ((BigDecimal) value)
         : new BigDecimal(value.toString());
-    if (promoteValueToName) {
+    if (promoteValueToNameFailureToken != null) {
       return name(bigDecimalValue.toString());
     }
     add(bigDecimalValue);

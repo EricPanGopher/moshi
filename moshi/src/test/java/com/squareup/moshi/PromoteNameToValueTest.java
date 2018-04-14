@@ -208,7 +208,7 @@ public final class PromoteNameToValueTest {
   @Test public void writerStringValue() throws Exception {
     JsonWriter writer = factory.newWriter();
     writer.beginObject();
-    writer.promoteValueToName();
+    writer.promoteValueToName(String.class);
     writer.value("a");
     assertThat(writer.getPath()).isEqualTo("$.a");
     writer.value(1);
@@ -221,7 +221,7 @@ public final class PromoteNameToValueTest {
   @Test public void writerIntegerValue() throws Exception {
     JsonWriter writer = factory.newWriter();
     writer.beginObject();
-    writer.promoteValueToName();
+    writer.promoteValueToName(Integer.class);
     writer.value(5);
     assertThat(writer.getPath()).isEqualTo("$.5");
     writer.value(1);
@@ -234,7 +234,7 @@ public final class PromoteNameToValueTest {
   @Test public void writerDoubleValue() throws Exception {
     JsonWriter writer = factory.newWriter();
     writer.beginObject();
-    writer.promoteValueToName();
+    writer.promoteValueToName(Double.class);
     writer.value(5.5d);
     assertThat(writer.getPath()).isEqualTo("$.5.5");
     writer.value(1);
@@ -247,12 +247,13 @@ public final class PromoteNameToValueTest {
   @Test public void writerBooleanValue() throws Exception {
     JsonWriter writer = factory.newWriter();
     writer.beginObject();
-    writer.promoteValueToName();
+    writer.promoteValueToName(Boolean.class);
     try {
       writer.value(true);
       fail();
     } catch (IllegalStateException e) {
-      assertThat(e).hasMessage("Nesting problem.");
+      assertThat(e).hasMessage(
+          "class java.lang.Boolean cannot be used as a map key in JSON at path $.");
     }
     writer.value("true");
     assertThat(writer.getPath()).isEqualTo("$.true");
@@ -265,7 +266,7 @@ public final class PromoteNameToValueTest {
   @Test public void writerLongValue() throws Exception {
     JsonWriter writer = factory.newWriter();
     writer.beginObject();
-    writer.promoteValueToName();
+    writer.promoteValueToName(Long.class);
     writer.value(5L);
     assertThat(writer.getPath()).isEqualTo("$.5");
     writer.value(1);
@@ -278,12 +279,12 @@ public final class PromoteNameToValueTest {
   @Test public void writerNullValue() throws Exception {
     JsonWriter writer = factory.newWriter();
     writer.beginObject();
-    writer.promoteValueToName();
+    writer.promoteValueToName(Void.class);
     try {
       writer.nullValue();
       fail();
     } catch (IllegalStateException e) {
-      assertThat(e).hasMessage("Nesting problem.");
+      assertThat(e).hasMessage("null cannot be used as a map key in JSON at path $.");
     }
     writer.value("null");
     assertThat(writer.getPath()).isEqualTo("$.null");
@@ -299,7 +300,7 @@ public final class PromoteNameToValueTest {
     writer.beginObject();
     writer.name("a");
     writer.value(1);
-    writer.promoteValueToName();
+    writer.promoteValueToName(String.class);
     writer.value("b");
     assertThat(writer.getPath()).isEqualTo("$.b");
     writer.value(2);
@@ -312,7 +313,7 @@ public final class PromoteNameToValueTest {
   @Test public void writerEmptyValueObject() throws Exception {
     JsonWriter writer = factory.newWriter();
     writer.beginObject();
-    writer.promoteValueToName();
+    writer.promoteValueToName(String.class);
     assertThat(writer.getPath()).isEqualTo("$.");
     writer.endObject();
     assertThat(writer.getPath()).isEqualTo("$");
@@ -323,7 +324,7 @@ public final class PromoteNameToValueTest {
     JsonWriter writer = factory.newWriter();
     writer.beginArray();
     writer.beginObject();
-    writer.promoteValueToName();
+    writer.promoteValueToName(String.class);
     writer.endObject();
     writer.beginObject();
     try {
