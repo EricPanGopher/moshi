@@ -18,6 +18,7 @@ package com.squareup.moshi;
 import java.io.IOException;
 import javax.annotation.Nullable;
 import okio.BufferedSink;
+import okio.BufferedSource;
 import okio.Sink;
 
 import static com.squareup.moshi.JsonScope.DANGLING_NAME;
@@ -241,6 +242,14 @@ final class JsonUtf8Writer extends JsonWriter {
     writeDeferredName();
     beforeValue();
     sink.writeUtf8(string);
+    pathIndices[stackSize - 1]++;
+    return this;
+  }
+
+  @Override public JsonWriter value(BufferedSource source) throws IOException {
+    writeDeferredName();
+    beforeValue();
+    sink.writeAll(source);
     pathIndices[stackSize - 1]++;
     return this;
   }
